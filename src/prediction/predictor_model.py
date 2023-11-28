@@ -116,6 +116,10 @@ class Forecaster:
         forecaster = ForecasterAutoreg(regressor=model, lags=self.lags)
 
         covariates = data_schema.future_covariates  # + data_schema.past_covariates
+        history.set_index(data_schema.time_col, inplace=True)
+        history.index = pd.RangeIndex(
+            start=history.index[0], stop=history.index[-1] + 1
+        )
 
         exog = None
         if covariates:
@@ -160,6 +164,11 @@ class Forecaster:
     def _predict_on_series(self, key_and_future_df):
         """Make forecast on given individual series of data"""
         key, future_df = key_and_future_df
+        time_col = future_df[self.data_schema.time_col]
+        future_df.set_index(self.data_schema.time_col, inplace=True)
+        future_df.index = pd.RangeIndex(
+            start=future_df.index[0], stop=future_df.index[-1] + 1
+        )
 
         exog = None
         covariates = self.data_schema.future_covariates
@@ -169,6 +178,7 @@ class Forecaster:
         if self.models.get(key) is not None:
             forecast = self.models[key].predict(steps=len(future_df), exog=exog)
             future_df[self.data_schema.target] = forecast.values
+            future_df[self.data_schema.time_col] = time_col.values
 
         else:
             # no model found - key wasnt found in history, so cant forecast for it.
