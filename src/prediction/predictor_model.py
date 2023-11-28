@@ -245,7 +245,6 @@ def train_predictor_model(
     history_forecast_ratio = hyperparameters.get("history_forecast_ratio")
     if history_forecast_ratio:
         history_length = data_schema.forecast_length * history_forecast_ratio
-        print("hereees")
     if "history_forecast_ratio" in hyperparameters:
         hyperparameters.pop("history_forecast_ratio")
 
