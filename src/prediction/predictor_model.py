@@ -23,9 +23,12 @@ class Forecaster:
     """
 
     model_name = "RandomForest Forecaster"
+    made_up_frequency = "S"  # by seconds
+    made_up_start_dt = "2000-01-01 00:00:00"
 
     def __init__(
         self,
+        data_schema: ForecastingSchema,
         n_estimators: int = 50,
         criterion: str = "squared_error",
         min_samples_split: Union[int, float] = 2,
@@ -36,6 +39,9 @@ class Forecaster:
         """Construct a new RandomForest Forecaster
 
         Args:
+
+            data_schema (ForecastingSchema): Schema of the data used for training.
+
             n_estimators (List[int]): The number of trees in the forest.
 
             criterion (List[str]): The function to measure the quality of a split. Supported criteria are “squared_error” for the mean squared error,
@@ -68,7 +74,8 @@ class Forecaster:
         self.lags = lags
         self._is_trained = False
         self.models = {}
-        self.data_schema = None
+        self.data_schema = data_schema
+        self.end_index = {}
 
     def fit(
         self,
@@ -98,14 +105,16 @@ class Forecaster:
         for id, series in zip(all_ids, all_series):
             if history_length:
                 series = series[-history_length:]
-            model = self._fit_on_series(history=series, data_schema=data_schema)
+            model = self._fit_on_series(history=series, data_schema=data_schema, id=id)
             self.models[id] = model
 
         self.all_ids = all_ids
         self._is_trained = True
         self.data_schema = data_schema
 
-    def _fit_on_series(self, history: pd.DataFrame, data_schema: ForecastingSchema):
+    def _fit_on_series(
+        self, history: pd.DataFrame, data_schema: ForecastingSchema, id: int
+    ):
         """Fit RandomForest model to given individual series of data"""
         model = RandomForestRegressor(
             n_estimators=self.n_estimators,
@@ -116,11 +125,10 @@ class Forecaster:
         forecaster = ForecasterAutoreg(regressor=model, lags=self.lags)
 
         covariates = data_schema.future_covariates  # + data_schema.past_covariates
-        history.set_index(data_schema.time_col, inplace=True)
-        history.index = pd.RangeIndex(
-            start=history.index[0], stop=history.index[-1] + 1
-        )
 
+        history.index = pd.RangeIndex(start=0, stop=len(history))
+
+        self.end_index[id] = len(history)
         exog = None
         if covariates:
             exog = history[covariates]
@@ -141,6 +149,9 @@ class Forecaster:
         if not self._is_trained:
             raise NotFittedError("Model is not fitted yet.")
 
+        # test_data = self.prepare_data(test_data.copy(), is_train=False)
+        # test_data.set_index(self.data_schema.time_col, inplace=True)
+        print(test_data)
         groups_by_ids = test_data.groupby(self.data_schema.id_col)
         all_series = [
             groups_by_ids.get_group(id_).drop(columns=self.data_schema.id_col)
@@ -149,7 +160,9 @@ class Forecaster:
         # forecast one series at a time
         all_forecasts = []
         for id_, series_df in zip(self.all_ids, all_series):
-            forecast = self._predict_on_series(key_and_future_df=(id_, series_df))
+            forecast = self._predict_on_series(
+                key_and_future_df=(id_, series_df), id=id_
+            )
             forecast.insert(0, self.data_schema.id_col, id_)
             all_forecasts.append(forecast)
 
@@ -161,24 +174,23 @@ class Forecaster:
         )
         return all_forecasts
 
-    def _predict_on_series(self, key_and_future_df):
+    def _predict_on_series(self, key_and_future_df, id):
         """Make forecast on given individual series of data"""
         key, future_df = key_and_future_df
-        time_col = future_df[self.data_schema.time_col]
-        future_df.set_index(self.data_schema.time_col, inplace=True)
-        future_df.index = pd.RangeIndex(
-            start=future_df.index[0], stop=future_df.index[-1] + 1
-        )
 
+        start = self.end_index[id]
+        future_df.index = pd.RangeIndex(start=start, stop=start + len(future_df))
         exog = None
         covariates = self.data_schema.future_covariates
         if covariates:
             exog = future_df[covariates]
 
         if self.models.get(key) is not None:
-            forecast = self.models[key].predict(steps=len(future_df), exog=exog)
+            forecast = self.models[key].predict(
+                steps=len(future_df),
+                exog=exog,
+            )
             future_df[self.data_schema.target] = forecast.values
-            future_df[self.data_schema.time_col] = time_col.values
 
         else:
             # no model found - key wasnt found in history, so cant forecast for it.
@@ -238,6 +250,7 @@ def train_predictor_model(
         hyperparameters.pop("history_forecast_ratio")
 
     model = Forecaster(
+        data_schema=data_schema,
         **hyperparameters,
     )
     model.fit(history=history, data_schema=data_schema, history_length=history_length)
