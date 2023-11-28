@@ -3,11 +3,9 @@ import warnings
 import joblib
 import numpy as np
 import pandas as pd
-from typing import Optional, Union, List, Tuple
+from typing import Union, List
 from sklearn.ensemble import RandomForestRegressor
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
-from skforecast.model_selection import grid_search_forecaster
-from sklearn.metrics import mean_squared_error
 from schema.data_schema import ForecastingSchema
 from sklearn.exceptions import NotFittedError
 
@@ -18,13 +16,13 @@ PREDICTOR_FILE_NAME = "predictor.joblib"
 
 
 class Forecaster:
-    """A wrapper class for the AutoRandomForest Forecaster.
+    """A wrapper class for the RandomForest Forecaster.
 
     This class provides a consistent interface that can be used with other
     Forecaster models.
     """
 
-    model_name = "AutoRandomForest Forecaster"
+    model_name = "RandomForest Forecaster"
 
     def __init__(
         self,
@@ -32,7 +30,7 @@ class Forecaster:
         criterion: str = "squared_error",
         min_samples_split: Union[int, float] = 2,
         min_samples_leaf: int = 1,
-        lags: List[int] = [2, 5, 7],
+        lags: Union[int, List[int]] = [2, 5, 7],
         random_state: int = 0,
     ):
         """Construct a new AutoRandomForest Forecaster
@@ -55,6 +53,10 @@ class Forecaster:
                 A split point at any depth will only be considered if it leaves at least min_samples_leaf training samples in each of the left and right branches. This may have the effect of smoothing the model, especially in regression.
                 If int, then consider min_samples_leaf as the minimum number.
                 If float, then min_samples_leaf is a fraction and ceil(min_samples_leaf * n_samples) are the minimum number of samples for each node.
+
+            lags (Union[int, List[int]]): Lags used as predictors. Index starts at 1, so lag 1 is equal to t-1.
+                - int: include lags from 1 to lags (included).
+                - list, 1d numpy ndarray or range: include only lags present in lags, all elements must be int.
 
             random_state (int): Sets the underlying random seed at model initialization time.
         """
