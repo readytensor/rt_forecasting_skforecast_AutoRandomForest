@@ -33,7 +33,7 @@ class Forecaster:
         lags: Union[int, List[int]] = [2, 5, 7],
         random_state: int = 0,
     ):
-        """Construct a new AutoRandomForest Forecaster
+        """Construct a new RandomForest Forecaster
 
         Args:
             n_estimators (List[int]): The number of trees in the forest.
@@ -77,7 +77,7 @@ class Forecaster:
         history_length: int = None,
     ) -> None:
         """Fit the Forecaster to the training data.
-        A separate AutoRandomForest model is fit to each series that is contained
+        A separate RandomForest model is fit to each series that is contained
         in the data.
 
         Args:
@@ -106,7 +106,7 @@ class Forecaster:
         self.data_schema = data_schema
 
     def _fit_on_series(self, history: pd.DataFrame, data_schema: ForecastingSchema):
-        """Fit AutoRandomForest model to given individual series of data"""
+        """Fit RandomForest model to given individual series of data"""
         model = RandomForestRegressor(
             n_estimators=self.n_estimators,
             min_samples_leaf=self.min_samples_leaf,
