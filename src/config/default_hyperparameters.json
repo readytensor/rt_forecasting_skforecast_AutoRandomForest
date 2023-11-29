@@ -2,8 +2,8 @@
   "n_estimators": 100,
   "lags": 20,
   "criterion": "squared_error",
-  "min_samples_split": null,
-  "min_samples_leaf": null,
+  "min_samples_split": 2,
+  "min_samples_leaf": 1,
   "random_state": 0,
   "history_forecast_ratio": null
 }
