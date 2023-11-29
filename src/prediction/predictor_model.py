@@ -27,11 +27,11 @@ class Forecaster:
     def __init__(
         self,
         data_schema: ForecastingSchema,
-        n_estimators: int = 50,
+        n_estimators: int = 100,
         criterion: str = "squared_error",
         min_samples_split: Union[int, float] = 2,
         min_samples_leaf: int = 1,
-        lags: Union[int, List[int]] = [2, 5, 7],
+        lags: Union[int, List[int]] = 7,
         random_state: int = 0,
     ):
         """Construct a new RandomForest Forecaster
