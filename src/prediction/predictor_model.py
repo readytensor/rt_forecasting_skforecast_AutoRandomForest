@@ -40,20 +40,20 @@ class Forecaster:
 
             data_schema (ForecastingSchema): Schema of the data used for training.
 
-            n_estimators (List[int]): The number of trees in the forest.
+            n_estimators (int): The number of trees in the forest.
 
-            criterion (List[str]): The function to measure the quality of a split. Supported criteria are “squared_error” for the mean squared error,
+            criterion (str): The function to measure the quality of a split. Supported criteria are “squared_error” for the mean squared error,
                 which is equal to variance reduction as feature selection criterion and minimizes the L2 loss using the mean of each terminal node,
                 “friedman_mse”, which uses mean squared error with Friedman's improvement score for potential splits,
                 “absolute_error” for the mean absolute error, which minimizes the L1 loss using the median of each terminal node,
                 and “poisson” which uses reduction in Poisson deviance to find splits. Training using “absolute_error” is significantly slower than when using “squared_error”.
 
-            min_samples_split (List[Union[int, flot]]): The minimum number of samples required to split an internal node:
+            min_samples_split (Union[int, float]): The minimum number of samples required to split an internal node:
                 If int, then consider min_samples_split as the minimum number.
                 If float, then min_samples_split is a fraction and ceil(min_samples_split * n_samples) are the minimum number of samples for each split.
 
 
-            min_samples_leaf List[Union[int, float]]: The minimum number of samples required to be at a leaf node.
+            min_samples_leaf (Union[int, float]): The minimum number of samples required to be at a leaf node.
                 A split point at any depth will only be considered if it leaves at least min_samples_leaf training samples in each of the left and right branches. This may have the effect of smoothing the model, especially in regression.
                 If int, then consider min_samples_leaf as the minimum number.
                 If float, then min_samples_leaf is a fraction and ceil(min_samples_leaf * n_samples) are the minimum number of samples for each node.
