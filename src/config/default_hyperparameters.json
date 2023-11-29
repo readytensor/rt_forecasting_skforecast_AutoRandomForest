@@ -5,5 +5,5 @@
   "min_samples_split": 2,
   "min_samples_leaf": 1,
   "random_state": 0,
-  "history_forecast_ratio": null
+  "history_forecast_ratio": 20
 }
