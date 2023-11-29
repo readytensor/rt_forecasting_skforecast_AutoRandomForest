@@ -23,8 +23,6 @@ class Forecaster:
     """
 
     model_name = "RandomForest Forecaster"
-    made_up_frequency = "S"  # by seconds
-    made_up_start_dt = "2000-01-01 00:00:00"
 
     def __init__(
         self,
@@ -149,9 +147,6 @@ class Forecaster:
         if not self._is_trained:
             raise NotFittedError("Model is not fitted yet.")
 
-        # test_data = self.prepare_data(test_data.copy(), is_train=False)
-        # test_data.set_index(self.data_schema.time_col, inplace=True)
-        print(test_data)
         groups_by_ids = test_data.groupby(self.data_schema.id_col)
         all_series = [
             groups_by_ids.get_group(id_).drop(columns=self.data_schema.id_col)
