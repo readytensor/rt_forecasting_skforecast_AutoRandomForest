@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from typing import Union, List
 from sklearn.ensemble import RandomForestRegressor
-from skforecast.ForecasterAutoregDirect import ForecasterAutoregDirect
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 
 from schema.data_schema import ForecastingSchema
@@ -198,12 +197,9 @@ class Forecaster:
             min_samples_split=self.min_samples_split,
             random_state=self.random_state,
         )
-        forecaster = ForecasterAutoreg(
-            regressor=model,
-            lags=self.lags,  # steps=data_schema.forecast_length
-        )
+        forecaster = ForecasterAutoreg(regressor=model, lags=self.lags)
 
-        covariates = future_covariates  # + data_schema.past_covariates
+        covariates = future_covariates
 
         history.index = pd.RangeIndex(start=0, stop=len(history))
 
