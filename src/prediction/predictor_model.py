@@ -51,8 +51,7 @@ class Forecaster:
 
             lags_forecast_ratio (int):
                 Sets the lags parameters depending on the forecast horizon.
-                lags = lags_past_covariates = forecast horizon * lags_forecast_ratio
-                lags_future_covariates = (lags, forecast horizon)
+                lags = forecast horizon * lags_forecast_ratio
                 This parameters overides lags parameters.
 
             n_estimators (int): The number of trees in the forest.
