@@ -1,9 +1,9 @@
 {
-  "n_estimators": 200,
+  "n_estimators": 100,
   "criterion": "squared_error",
   "random_state": 0,
   "history_forecast_ratio": 20,
-  "lags_forecast_ratio": null,
-  "lags": 20,
+  "lags_forecast_ratio": 3,
+  "lags": null,
   "use_exogenous": true
 }
