@@ -1,10 +1,13 @@
 {
-  "n_estimators": 100,
+  "n_estimators": 50,
   "criterion": "squared_error",
   "random_state": 0,
-  "history_forecast_ratio": 20,
+  "history_forecast_ratio": 10,
   "lags_forecast_ratio": 3,
   "lags": null,
+  "max_depth": 10,
+  "min_samples_split": 6,
+  "min_samples_leaf": 3,
   "use_exogenous": true,
   "bootstrap": true
 }
