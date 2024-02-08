@@ -11,8 +11,12 @@ from schema.data_schema import ForecastingSchema
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import MinMaxScaler
 
+from logger import get_logger
+
 warnings.filterwarnings("ignore")
 
+logger = get_logger(task_name="model")
+PREDICTOR_FILE_NAME = "predictor.joblib"
 
 PREDICTOR_FILE_NAME = "predictor.joblib"
 
@@ -119,14 +123,7 @@ class Forecaster:
             **kwargs,
         )
 
-        transformer_exog = MinMaxScaler() if has_covariates else None
-
-        self.model = ForecasterAutoregMultiSeries(
-            regressor=self.base_model,
-            lags=self.lags,
-            transformer_series=MinMaxScaler(),
-            transformer_exog=transformer_exog,
-        )
+        self.transformer_exog = MinMaxScaler() if has_covariates else None
 
     def _add_future_covariates_from_date(
         self,
@@ -211,6 +208,11 @@ class Forecaster:
         targets = [series[data_schema.target] for series in all_series]
         target_series = pd.DataFrame({f"id_{k}": v for k, v in zip(all_ids, targets)})
 
+        if len(targets[0]) < 2 * self.data_schema.forecast_length:
+            raise ValueError(
+                f"Training series is too short. History should be at least double the forecast horizon. history_length = ({len(targets[0])}), forecast horizon = ({self.data_schema.forecast_length})"
+            )
+
         exog = None
 
         if self.use_exogenous:
@@ -221,6 +223,19 @@ class Forecaster:
             exog = pd.concat(exog, axis=1)
             exog.columns = [str(i) for i in range(exog.shape[1])]
             self.train_end_index = all_series[0].index.values[-1]
+
+        if self.lags >= len(targets[0]):
+            logger.warning(
+                f"The maximum lag ({self.lags}) must be less than the length of the series ({len(targets[0])}). Lags set to ({len(targets[0]) - 1})"
+            )
+            self.lags = len(targets[0]) - 1
+
+        self.model = ForecasterAutoregMultiSeries(
+            regressor=self.base_model,
+            lags=self.lags,
+            transformer_series=MinMaxScaler(),
+            transformer_exog=self.transformer_exog,
+        )
 
         self.model.fit(series=target_series, exog=exog)
 
