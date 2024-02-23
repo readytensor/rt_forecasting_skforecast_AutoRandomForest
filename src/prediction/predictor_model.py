@@ -179,6 +179,27 @@ class Forecaster:
         all_series = new_length
         return all_series
 
+    def _validate_lags_and_history_length(self, series_length: int):
+        """
+        Validate the value of lags and that history length is at least double the forecast horizon.
+        If the provided lags value is invalid (too large), lags are set to the largest possible value.
+
+        Args:
+            series_length (int): The length of the history.
+
+        Returns: None
+        """
+        if series_length < 2 * self.data_schema.forecast_length:
+            raise ValueError(
+                f"Training series is too short. History should be at least double the forecast horizon. history_length = ({series_length}), forecast horizon = ({self.data_schema.forecast_length})"
+            )
+
+        if self.lags >= series_length:
+            logger.warning(
+                f"The maximum lag ({self.lags}) must be less than the length of the series ({series_length}). Lags set to ({series_length - 1})"
+            )
+            self.lags = series_length - 1
+
     def fit(
         self,
         history: pd.DataFrame,
@@ -208,10 +229,7 @@ class Forecaster:
         targets = [series[data_schema.target] for series in all_series]
         target_series = pd.DataFrame({f"id_{k}": v for k, v in zip(all_ids, targets)})
 
-        if len(targets[0]) < 2 * self.data_schema.forecast_length:
-            raise ValueError(
-                f"Training series is too short. History should be at least double the forecast horizon. history_length = ({len(targets[0])}), forecast horizon = ({self.data_schema.forecast_length})"
-            )
+        self._validate_lags_and_history_length(series_length=len(targets[0]))
 
         exog = None
 
@@ -223,12 +241,6 @@ class Forecaster:
             exog = pd.concat(exog, axis=1)
             exog.columns = [str(i) for i in range(exog.shape[1])]
             self.train_end_index = all_series[0].index.values[-1]
-
-        if self.lags >= len(targets[0]):
-            logger.warning(
-                f"The maximum lag ({self.lags}) must be less than the length of the series ({len(targets[0])}). Lags set to ({len(targets[0]) - 1})"
-            )
-            self.lags = len(targets[0]) - 1
 
         self.model = ForecasterAutoregMultiSeries(
             regressor=self.base_model,
